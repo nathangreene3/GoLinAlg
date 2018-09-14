@@ -1,27 +1,31 @@
 package main
 
-type vector []float64
+// A Vector is an array of numbers
+type Vector []float64
 
-func add(u, v vector) (w vector) {
+// VAdd returns w = u+v.
+func VAdd(u, v Vector) (w Vector) {
 	if len(u) == len(v) {
-		w = make(vector, len(u))
+		w = make(Vector, len(u))
 		for i := range u {
 			w[i] = u[i] + v[i]
 		}
 	} else {
-		panic("vectors u and v must be of the same length")
+		panic("Vectors u and v must be of the same length")
 	}
 	return w
 }
 
-func subtract(u, v vector) (w vector) {
-	w = add(u, multiply(-1, v))
+// VSubtract returns w = u-v.
+func VSubtract(u, v Vector) (w Vector) {
+	w = VAdd(u, VMultiply(-1, v))
 	return w
 }
 
-func multiply(a float64, u vector) (v vector) {
+// VMultiply returns v = a*u.
+func VMultiply(a float64, u Vector) (v Vector) {
 	if a != 0 {
-		v = make(vector, len(u))
+		v = make(Vector, len(u))
 		for i := range u {
 			v[i] = a * u[i]
 		}
@@ -31,21 +35,24 @@ func multiply(a float64, u vector) (v vector) {
 	return v
 }
 
-func sum(v vector) (s float64) {
+// VSum returns the sum of the components of v.
+func VSum(v Vector) (s float64) {
 	for i := range v {
 		s += v[i]
 	}
 	return s
 }
 
-func dotProduct(u, v vector) (p float64) {
+// DotProduct returns u*v.
+func DotProduct(u, v Vector) (p float64) {
 	for i := range u {
 		p += u[i] * v[i]
 	}
 	return p
 }
 
-func mean(v vector) (a float64) {
-	a = sum(v) / float64(len(v))
+// VMean returns the mean of the components of v.
+func VMean(v Vector) (a float64) {
+	a = VSum(v) / float64(len(v))
 	return a
 }

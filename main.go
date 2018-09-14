@@ -6,8 +6,11 @@ import (
 )
 
 func main() {
-	A := makeMatrix(2, 3, func(i, j int) float64 { return rand.Float64() })
-	B := makeMatrix(2, 3, func(i, j int) float64 { return rand.Float64() })
-	C := matrix.add(A, B)
-	fmt.Println(C)
+	A := MakeMatrix(2, 3, func(i, j int) float64 { return rand.Float64() })
+	// B := MakeMatrix(2, 3, func(i, j int) float64 { return rand.Float64() })
+	// C := MAdd(A, B)
+	fmt.Println(A)
+	// fmt.Println(B)
+	// fmt.Println(C)
+	fmt.Println(Transpose(A))
 }
