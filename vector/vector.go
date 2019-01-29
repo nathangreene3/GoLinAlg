@@ -2,6 +2,7 @@ package vector
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -83,12 +84,45 @@ func Mean(v Vector) float64 {
 	return Sum(v) / float64(len(v))
 }
 
-// Less returns u < v. If |u| = |v| = 0, then false is returned. Panics
-// if |u| != |v|.
+// Length returns the geometric length of a vector. The result is the mathematical
+// quantity and is NOT the number of dimensions of the vector. Use len(v) for the
+// number of dimensions of a vector.
+func Length(v Vector) float64 {
+	return math.Sqrt(Dot(v, v))
+}
+
+// Unit returns the unit vector of a vector. The sum of the unit vector components
+// add to one and the unit vector is parallel to the given vector.
+func Unit(v Vector) Vector {
+	length := Length(v)
+	u := make(Vector, 0, len(v))
+	for i := range v {
+		u = append(u, v[i]/length)
+	}
+	return u
+}
+
+// AngleR returns the angle (in radians) between two vectors.
+func AngleR(u, v Vector) float64 {
+	return Dot(Unit(u), Unit(v))
+}
+
+// Proj returns the vector component of a vector u parallel to a non-zero vector v.
+func Proj(u, v Vector) Vector {
+	w := Unit(v)
+	a := Dot(u, w)
+	for i := range w {
+		w[i] *= a
+	}
+	return w
+}
+
+// Less returns u < v. If |u| = |v| = 0, then false is returned. Panics if
+// |u| != |v|.
 func Less(u, v Vector) bool {
-	n := len(u) // Length of vectors
+	n := len(u)
 	if n != len(v) {
-		panic("")
+		panic("Less: vectors must be of the same length")
 	}
 
 	if n == 0 {
@@ -102,12 +136,12 @@ func Less(u, v Vector) bool {
 	return true
 }
 
-// Equal returns u = v. If |u| = |v| = 0, then true is returned. Panics
-// if |u| != |v|.
+// Equal returns u = v. If |u| = |v| = 0, then true is returned. Panics if
+// |u| != |v|.
 func Equal(u, v Vector) bool {
 	n := len(u)
 	if n != len(v) {
-		panic("vectors u and v must be of the same length")
+		panic("Equal: vectors must be of the same length")
 	}
 
 	if n == 0 {
