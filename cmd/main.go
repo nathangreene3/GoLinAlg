@@ -13,8 +13,10 @@ func main() {
 	x := vector.Vector{1, 2, 3}
 	fmt.Println(
 		A.String(),
-		B.String(), x.String(),
+		B.String(),
+		x.String(),
 		matrix.Multiply(A, B),
 		matrix.Multiply(A, matrix.ColumnMatrix(x)),
 	)
+	fmt.Println(matrix.MakeMatrix(2, 2, func(i, j int) float64 { return float64(i + j) }).Determinant())
 }

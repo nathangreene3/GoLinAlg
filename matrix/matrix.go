@@ -102,6 +102,27 @@ func (A Matrix) String() string {
 	return sb.String()
 }
 
+// Equals returns true if two matrices are equal in dimension and for each entry.
+// Otherwise, it returns false.
+func Equals(A, B Matrix) bool {
+	// Compare dimensions
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if ma != mb || na != nb {
+		return false
+	}
+
+	// Compare entries
+	for i := range A {
+		for j := range A[i] {
+			if A[i][j] != B[i][j] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // RowMatrix converts a vector v to a 1-by-n matrix.
 func RowMatrix(v vector.Vector) Matrix {
 	return MakeMatrix(1, len(v), func(i, j int) float64 { return v[j] })
@@ -129,6 +150,8 @@ func (A Matrix) Determinant() float64 {
 		return A[0][0]
 	case 2:
 		return A[0][0]*A[1][1] - A[0][1]*A[1][0]
+	case 3:
+		return A[0][0]*(A[1][2]*A[2][2]-A[1][2]*A[2][1]) - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0]) + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0])
 	default:
 		// TODO //
 		return 0

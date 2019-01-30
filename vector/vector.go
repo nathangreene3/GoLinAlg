@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// A Vector is an array of numbers
+// A Vector is an array of numbers. The dimension refers to the number of entries
+// in the vector.
 type Vector []float64
 
 // String returns a formatted string representation of a vector.
@@ -23,7 +24,8 @@ func (v Vector) String() string {
 	return strings.Join(s, "")
 }
 
-// Add returns w = u+v. Panics if |u| != |v|.
+// Add returns the vector addition of two vectors. Panics if the given vectors are
+// not of equal dimension.
 func Add(u, v Vector) Vector {
 	n := len(u)
 	if n != len(v) {
@@ -37,12 +39,14 @@ func Add(u, v Vector) Vector {
 	return w
 }
 
-// Subtract returns w = u-v. Panics if |u| != |v|.
+// Subtract returns the vector subtraction of two vectors. Panics if the given
+// vectors are not of equal dimension.
 func Subtract(u, v Vector) Vector {
 	return Add(u, ScalarMultiply(-1, v))
 }
 
-// ScalarMultiply returns v = a*u.
+// ScalarMultiply returns a vector with each entry defined as the product of the
+// given vector and a given scalar.
 func ScalarMultiply(a float64, u Vector) Vector {
 	v := make(Vector, 0, len(u))
 	for i := range u {
@@ -51,7 +55,8 @@ func ScalarMultiply(a float64, u Vector) Vector {
 	return v
 }
 
-// Multiply returns w = u*v. Panics if |u| != |v|.
+// Multiply returns a vector with each entry defined as the product of the given
+// vectors' entries. Panics if the vectors are not of equal dimension.
 func Multiply(u, v Vector) Vector {
 	n := len(u)
 	if n != len(v) {
@@ -65,7 +70,7 @@ func Multiply(u, v Vector) Vector {
 	return w
 }
 
-// Sum returns the sum of the components of v.
+// Sum returns the sum of the components of a vector.
 func Sum(v Vector) float64 {
 	var s float64
 	for i := range v {
@@ -74,9 +79,22 @@ func Sum(v Vector) float64 {
 	return s
 }
 
-// Dot returns p = sum u*v.
+// Dot returns the dot product of two vectors.
 func Dot(u, v Vector) float64 {
 	return Sum(Multiply(u, v))
+}
+
+// Cross returns the cross product of two three-dimensional vectors.
+func Cross(u, v Vector) Vector {
+	if len(u) != 3 || len(v) != 3 {
+		panic("vectors must be of dimension three")
+	}
+
+	return Vector{
+		u[1]*v[2] - u[2]*v[1],
+		u[2]*v[0] - u[0]*v[2],
+		u[0]*v[1] - u[1]*v[0],
+	}
 }
 
 // Mean returns the mean of the components of v.
@@ -117,8 +135,9 @@ func Proj(u, v Vector) Vector {
 	return w
 }
 
-// Less returns u < v. If |u| = |v| = 0, then false is returned. Panics if
-// |u| != |v|.
+// Less returns the less-than comparison of two vectors. If the number of
+// dimensions is zero, then false is returned. Panics if the vectors hav
+// different dimensions.
 func Less(u, v Vector) bool {
 	n := len(u)
 	if n != len(v) {
@@ -136,17 +155,14 @@ func Less(u, v Vector) bool {
 	return true
 }
 
-// Equal returns u = v. If |u| = |v| = 0, then true is returned. Panics if
-// |u| != |v|.
+// Equal returns the comparison of each entry in two given vectors. Panics if the
+// vectors have different dimensions.
 func Equal(u, v Vector) bool {
 	n := len(u)
 	if n != len(v) {
 		panic("Equal: vectors must be of the same length")
 	}
 
-	if n == 0 {
-		return true
-	}
 	for i := 0; i < n; i++ {
 		if u[i] != v[i] {
 			return false
