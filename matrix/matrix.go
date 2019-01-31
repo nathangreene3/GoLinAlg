@@ -22,40 +22,29 @@ func MakeMatrix(m, n int, f func(a, b int) float64) Matrix {
 	return A
 }
 
+// EmptyMatrix returns an m-by-n matrix with zeroes for all entries.
+func EmptyMatrix(m, n int) Matrix {
+	return MakeMatrix(m, n, func(i, j int) float64 { return 0 })
+}
+
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
 	if m < 0 || n < 0 {
 		panic("Identity: dimensions m and n must be positive integers")
 	}
 
-	I := MakeMatrix(
-		m,
-		n,
-		func(a, b int) float64 {
-			if a == b {
-				return 1
-			}
-			return 0
-		},
-	)
-	return I
+	return MakeMatrix(m, n, func(i, j int) float64 { return (i + j) % 2 })
 }
 
-// Add returns the sum of two matrices.
+// Add returns the sum of two matrices. Panics of the matrices are not equal in dimension.
 func Add(A, B Matrix) Matrix {
-	m := len(A)
-	if m != len(B) {
-		panic("matrices must have the same number of rows")
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if ma != mb || na != nb {
+		panic("matrices must have the same number of rows and columns")
 	}
 
-	n := len(A[0])
-	for i := range A {
-		if len(A[i]) != n || len(B[i]) != n {
-			panic("matrices must have the same number of columns")
-		}
-	}
-
-	return MakeMatrix(m, n, func(i, j int) float64 { return A[i][j] + B[i][j] })
+	return MakeMatrix(ma, na, func(i, j int) float64 { return A[i][j] + B[i][j] })
 }
 
 // Transpose returns the transpose of a matrix.
@@ -66,11 +55,13 @@ func Transpose(A Matrix) Matrix {
 // Multiply returns C = A*B. To multiply by a vector, convert the vector to a
 // column matrix.
 func Multiply(A, B Matrix) Matrix {
-	if len(A[0]) != len(B) {
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if na != mb {
 		panic("A and B are of incompatible dimensions") // Columns of A don't match rows of B
 	}
 
-	C := MakeMatrix(len(A), len(B[0]), func(i, j int) float64 { return 0 })
+	C := EmptyMatrix(ma, nb)
 	for i := range C {
 		for j := range C[0] {
 			for k := range A[0] {
@@ -83,14 +74,6 @@ func Multiply(A, B Matrix) Matrix {
 
 // String returns a formatted string representation of a matrix.
 func (A Matrix) String() string {
-	// s := make([]string, 0, len(A)+1)
-	// s = append(s, "["+A[0].String())
-	// for i := 1; i < len(A); i++ {
-	// 	s = append(s, ","+A[i].String())
-	// }
-	// s = append(s, "]")
-	// return strings.Join(s, "")
-
 	sb := strings.Builder{}
 	sb.WriteByte(byte('['))
 	sb.WriteString(A[0].String())
@@ -169,4 +152,80 @@ func (A Matrix) Dimensions() (int, int) {
 		}
 	}
 	return m, n
+}
+
+// Copy returns a deep copied matrix.
+func (A Matrix) Copy() Matrix {
+	m, n := A.Dimensions()
+	return MakeMatrix(m, n, func(i, j int) float64 { return A[i][j] })
+}
+
+// Join returns a matrix that is the joining of two given matrices. Panics if number of rows are not equal.
+func Join(A, B Matrix) Matrix {
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if ma != mb {
+		panic("matrices must have equal number of rows")
+	}
+
+	return MakeMatrix(
+		ma,
+		na+nb,
+		func(i, j int) float64 {
+			if j < na {
+				return A[i][j]
+			}
+			return B[i][j-na]
+		},
+	)
+}
+
+// AppendColumn returns a matrix that is the joining of a given matrix with a column vector. Panics if vector dimensions are not equal to the number of matrix rows.
+func AppendColumn(A Matrix, x Vector) Matrix {
+	return Join(A, ColumnMatrix(x))
+}
+
+// AppendRow returns a matrix that is the joining of a given matrix with a row vector. Panics if the vector dimensions are not equal to the number of matrix columns.
+func AppendRow(A Matrix, x Vector) Matrix {
+	m, n := A.Dimensions()
+	if n != len(x) {
+		panic("matrix columns must be equal to vector dimensions")
+	}
+
+	return MakeMatrix(
+		m+1,
+		n,
+		func(i, j int) float64 {
+			if i < m {
+				return A[i][j]
+			}
+			return x[j]
+		},
+	)
+}
+
+// Solve TODO
+func (A Matrix) Solve(y vector.Vector) Vector {
+	x := make(vector.Vector, 0, len(y))
+	B := Join(A, x.ColumnMatrix())
+	m, n := B.Dimensions()
+
+	// Iterate through each row
+	// for i := range B {
+	// 	// Divide each row by its diagonal to get 1 on the diagonal
+	// 	for j := range B[i] {
+	// 		B[i][j] /= B[i][i]
+	// 	}
+
+	// 	// Divide each row by -B[i][i] except for ith row
+	// 	for j := range B {
+	// 		if j == i {
+	// 			continue
+	// 		}
+	// 		for k := range B[j] {
+	// 			B[j][k] = B[j][k]/-B[i][i] + B[i][k]
+	// 		}
+	// 	}
+	// }
+	return y
 }
