@@ -1,15 +1,26 @@
 package main
 
+import (
+	"fmt"
+
+	"github.com/nathangreene3/GoLinAlg/vector"
+)
+
+type thing struct {
+	value1 string
+	value2 *string
+}
+
 func main() {
-	// A := matrix.MakeMatrix(2, 3, func(i, j int) float64 { return float64(i + j + 1) })
-	// B := matrix.MakeMatrix(3, 1, func(i, j int) float64 { return float64(i + j + 1) })
-	// x := vector.Vector{1, 2, 3}
-	// fmt.Println(
-	// 	A.String(),
-	// 	B.String(),
-	// 	x.String(),
-	// 	matrix.Multiply(A, B),
-	// 	matrix.Multiply(A, matrix.ColumnMatrix(x)),
-	// )
-	// fmt.Println(matrix.MakeMatrix(2, 2, func(i, j int) float64 { return float64(i + j) }).Determinant())
+	// m := 1.0
+	r := vector.Vector{0.50, 0.87}
+	v := vector.Vector{0.25, 0.97}
+	a := vector.ScalarMultiply(-1, vector.Unit(r))
+	dt := 0.01
+	fmt.Println(r, v, a)
+	for t := 0.0; t <= 1.0; t += dt {
+		r = vector.Add(r, vector.ScalarMultiply(dt, v))
+		v = vector.Add(v, vector.ScalarMultiply(dt, a))
+		fmt.Println(t, r)
+	}
 }

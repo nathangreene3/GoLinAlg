@@ -180,13 +180,13 @@ func Join(A, B Matrix) Matrix {
 	)
 }
 
-// AppendColumn returns a matrix that is the joining of a given matrix with a column vector. Panics if vector dimensions are not equal to the number of matrix rows.
-func AppendColumn(A Matrix, x Vector) Matrix {
+// AppendColumn returns a matrix that is the joining of a given matrix with a column Vector. Panics if vector dimensions are not equal to the number of matrix rows.
+func AppendColumn(A Matrix, x vector.Vector) Matrix {
 	return Join(A, ColumnMatrix(x))
 }
 
 // AppendRow returns a matrix that is the joining of a given matrix with a row vector. Panics if the vector dimensions are not equal to the number of matrix columns.
-func AppendRow(A Matrix, x Vector) Matrix {
+func AppendRow(A Matrix, x vector.Vector) Matrix {
 	m, n := A.Dimensions()
 	if n != len(x) {
 		panic("matrix columns must be equal to vector dimensions")
@@ -205,27 +205,43 @@ func AppendRow(A Matrix, x Vector) Matrix {
 }
 
 // Solve TODO
-func (A Matrix) Solve(y vector.Vector) Vector {
+func (A Matrix) Solve(y vector.Vector) vector.Vector {
 	x := make(vector.Vector, 0, len(y))
-	B := Join(A, x.ColumnMatrix())
+	B := Join(A, ColumnMatrix(x))
 	m, n := B.Dimensions()
 
-	// Iterate through each row
-	// for i := range B {
-	// 	// Divide each row by its diagonal to get 1 on the diagonal
-	// 	for j := range B[i] {
-	// 		B[i][j] /= B[i][i]
-	// 	}
+	// Sort on kth entry for each row
+	// sort.SliceStable(
+	// 	B,
+	// 	func(i, j int) bool {
+	// 		for k := range B[i] {
+	// 			if B[i][k] < B[j][k] {
+	// 				return true
+	// 			}
+	// 		}
+	// 		return false
+	// 	},
+	// )
 
-	// 	// Divide each row by -B[i][i] except for ith row
-	// 	for j := range B {
-	// 		if j == i {
-	// 			continue
-	// 		}
-	// 		for k := range B[j] {
-	// 			B[j][k] = B[j][k]/-B[i][i] + B[i][k]
-	// 		}
-	// 	}
-	// }
+	// Iterate through each row
+	for i := range B {
+		// Divide each row by its diagonal to get 1 on the diagonal
+		if B[i][i] == 0 {
+			continue
+		}
+		for j := range B[i] {
+			B[i][j] /= B[i][i]
+		}
+
+		// Divide each row by -B[i][i] except for ith row
+		for j := range B {
+			if j == i {
+				continue
+			}
+			for k := range B[j] {
+				B[j][k] = B[j][k]/-B[i][i] + B[i][k]
+			}
+		}
+	}
 	return y
 }
