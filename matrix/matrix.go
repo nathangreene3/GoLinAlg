@@ -29,11 +29,11 @@ func EmptyMatrix(m, n int) Matrix {
 
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
-	if m < 0 || n < 0 {
+	if m < 1 || n < 1 {
 		panic("Identity: dimensions m and n must be positive integers")
 	}
 
-	return MakeMatrix(m, n, func(i, j int) float64 { return (i + j) % 2 })
+	return MakeMatrix(m, n, func(i, j int) float64 { return float64((i + j) % 2) })
 }
 
 // Add returns the sum of two matrices. Panics of the matrices are not equal in dimension.
@@ -205,43 +205,61 @@ func AppendRow(A Matrix, x vector.Vector) Matrix {
 }
 
 // Solve TODO
-func (A Matrix) Solve(y vector.Vector) vector.Vector {
-	x := make(vector.Vector, 0, len(y))
-	B := Join(A, ColumnMatrix(x))
-	m, n := B.Dimensions()
+// func (A Matrix) Solve(y vector.Vector) vector.Vector {
+// 	// x := make(vector.Vector, 0, len(y))
+// 	// B := Join(A, ColumnMatrix(x))
+// 	// m, n := B.Dimensions()
 
-	// Sort on kth entry for each row
-	// sort.SliceStable(
-	// 	B,
-	// 	func(i, j int) bool {
-	// 		for k := range B[i] {
-	// 			if B[i][k] < B[j][k] {
-	// 				return true
-	// 			}
-	// 		}
-	// 		return false
-	// 	},
-	// )
+// 	// Sort on kth entry for each row
+// 	// sort.SliceStable(
+// 	// 	B,
+// 	// 	func(i, j int) bool {
+// 	// 		for k := range B[i] {
+// 	// 			if B[i][k] < B[j][k] {
+// 	// 				return true
+// 	// 			}
+// 	// 		}
+// 	// 		return false
+// 	// 	},
+// 	// )
 
-	// Iterate through each row
-	for i := range B {
-		// Divide each row by its diagonal to get 1 on the diagonal
-		if B[i][i] == 0 {
-			continue
-		}
-		for j := range B[i] {
-			B[i][j] /= B[i][i]
-		}
+// 	// Iterate through each row
+// 	// for i := range B {
+// 	// 	// Divide each row by its diagonal to get 1 on the diagonal
+// 	// 	if B[i][i] == 0 {
+// 	// 		continue
+// 	// 	}
+// 	// 	for j := range B[i] {
+// 	// 		B[i][j] /= B[i][i]
+// 	// 	}
 
-		// Divide each row by -B[i][i] except for ith row
-		for j := range B {
-			if j == i {
-				continue
+// 	// 	// Divide each row by -B[i][i] except for ith row
+// 	// 	for j := range B {
+// 	// 		if j == i {
+// 	// 			continue
+// 	// 		}
+// 	// 		for k := range B[j] {
+// 	// 			B[j][k] = B[j][k]/-B[i][i] + B[i][k]
+// 	// 		}
+// 	// 	}
+// 	// }
+// 	// return y
+// }
+
+// SwapRows swaps two rows.
+func (A Matrix) SwapRows(i, j int) Matrix {
+	m, n := A.Dimensions()
+	I := MakeMatrix(
+		m,
+		n,
+		func(a, b int) float64 {
+			switch {
+			case a == b, a == i && b == j, a == j && b == i:
+				return 1
+			default:
+				return 0
 			}
-			for k := range B[j] {
-				B[j][k] = B[j][k]/-B[i][i] + B[i][k]
-			}
-		}
-	}
-	return y
+		},
+	)
+	return Multiply(I, A)
 }
