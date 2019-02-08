@@ -40,5 +40,5 @@ func swapRowsTest() {
 			A[i][j] = float64(i + j)
 		}
 	}
-	fmt.Println(A, A.SwapRows(1, 2))
+	fmt.Println(A, matrix.SwapRows(A, 1, 2))
 }

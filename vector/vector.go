@@ -10,6 +10,14 @@ import (
 // in the vector.
 type Vector []float64
 
+// New returns an empty vector of a given length and capacity. The
+// actual length of the returned vector is at least zero and the
+// actual capacity is at least two or set to the length, whichever
+// is larger.
+func New(length, capacity int) Vector {
+	return make(Vector, maxInt(0, length), maxInt(2, length, capacity))
+}
+
 // String returns a formatted string representation of a vector.
 func (v Vector) String() string {
 	n := len(v) // Length of v
@@ -120,19 +128,16 @@ func Unit(v Vector) Vector {
 	return u
 }
 
-// AngleR returns the angle (in radians) between two vectors.
-func AngleR(u, v Vector) float64 {
+// Angle returns the angle (in radians) between two vectors.
+func Angle(u, v Vector) float64 {
 	return Dot(Unit(u), Unit(v))
 }
 
-// Proj returns the vector component of a vector u parallel to a non-zero vector v.
-func Proj(u, v Vector) Vector {
+// Projection returns the vector component of a vector u parallel to a non-zero
+// vector v.
+func Projection(u, v Vector) Vector {
 	w := Unit(v)
-	a := Dot(u, w)
-	for i := range w {
-		w[i] *= a
-	}
-	return w
+	return ScalarMultiply(Dot(u, w), w)
 }
 
 // Less returns the less-than comparison of two vectors. If the number of

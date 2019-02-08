@@ -6,12 +6,17 @@ import (
 	"github.com/nathangreene3/GoLinAlg/vector"
 )
 
-// A Matrix is an array of Vectors.
+// A Matrix is an array of Vectors (rows).
 type Matrix []vector.Vector
 
 // MakeMatrix generates an m-by-n matrix with entries defined by a function f. The
-// parameters a and b correspond to the (i,j) entry of the returned matrix.
+// parameters a and b correspond to the (a,b) entry of the returned matrix. Panics
+// if either m or n are less than one.
 func MakeMatrix(m, n int, f func(a, b int) float64) Matrix {
+	if m < 1 || n < 1 {
+		panic("Identity: dimensions m and n must be positive integers")
+	}
+
 	A := make(Matrix, 0, m)
 	for i := 0; i < m; i++ {
 		A = append(A, make(vector.Vector, 0, n))
@@ -29,14 +34,11 @@ func EmptyMatrix(m, n int) Matrix {
 
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
-	if m < 1 || n < 1 {
-		panic("Identity: dimensions m and n must be positive integers")
-	}
-
 	return MakeMatrix(m, n, func(i, j int) float64 { return float64((i + j) % 2) })
 }
 
-// Add returns the sum of two matrices. Panics of the matrices are not equal in dimension.
+// Add returns the sum of two matrices. Panics if the matrices are not equal in
+// dimension.
 func Add(A, B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -45,6 +47,18 @@ func Add(A, B Matrix) Matrix {
 	}
 
 	return MakeMatrix(ma, na, func(i, j int) float64 { return A[i][j] + B[i][j] })
+}
+
+// Subtract returns the subtraction of two matrices. Panics if the matrices are
+// not equal in dimension.
+func Subtract(A, B Matrix) Matrix {
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if ma != mb || na != nb {
+		panic("matrices must have the same number of rows and columns")
+	}
+
+	return MakeMatrix(ma, na, func(i, j int) float64 { return A[i][j] - B[i][j] })
 }
 
 // Transpose returns the transpose of a matrix.
@@ -95,12 +109,10 @@ func Equals(A, B Matrix) bool {
 		return false
 	}
 
-	// Compare entries
+	// Compare rows
 	for i := range A {
-		for j := range A[i] {
-			if A[i][j] != B[i][j] {
-				return false
-			}
+		if !vector.Equal(A[i], B[i]) {
+			return false
 		}
 	}
 	return true
@@ -155,7 +167,7 @@ func (A Matrix) Dimensions() (int, int) {
 }
 
 // Copy returns a deep copied matrix.
-func (A Matrix) Copy() Matrix {
+func Copy(A Matrix) Matrix {
 	m, n := A.Dimensions()
 	return MakeMatrix(m, n, func(i, j int) float64 { return A[i][j] })
 }
@@ -204,62 +216,119 @@ func AppendRow(A Matrix, x vector.Vector) Matrix {
 	)
 }
 
-// Solve TODO
-// func (A Matrix) Solve(y vector.Vector) vector.Vector {
-// 	// x := make(vector.Vector, 0, len(y))
-// 	// B := Join(A, ColumnMatrix(x))
-// 	// m, n := B.Dimensions()
-
-// 	// Sort on kth entry for each row
-// 	// sort.SliceStable(
-// 	// 	B,
-// 	// 	func(i, j int) bool {
-// 	// 		for k := range B[i] {
-// 	// 			if B[i][k] < B[j][k] {
-// 	// 				return true
-// 	// 			}
-// 	// 		}
-// 	// 		return false
-// 	// 	},
-// 	// )
-
-// 	// Iterate through each row
-// 	// for i := range B {
-// 	// 	// Divide each row by its diagonal to get 1 on the diagonal
-// 	// 	if B[i][i] == 0 {
-// 	// 		continue
-// 	// 	}
-// 	// 	for j := range B[i] {
-// 	// 		B[i][j] /= B[i][i]
-// 	// 	}
-
-// 	// 	// Divide each row by -B[i][i] except for ith row
-// 	// 	for j := range B {
-// 	// 		if j == i {
-// 	// 			continue
-// 	// 		}
-// 	// 		for k := range B[j] {
-// 	// 			B[j][k] = B[j][k]/-B[i][i] + B[i][k]
-// 	// 		}
-// 	// 	}
-// 	// }
-// 	// return y
-// }
-
-// SwapRows swaps two rows.
-func (A Matrix) SwapRows(i, j int) Matrix {
-	m, n := A.Dimensions()
-	I := MakeMatrix(
+// SetDims returns a matrix with new dimensions. If the dimensions are larger than the dimensions of the given matrix, zeroes are entered in the larger rows and columns. That is, the given matrix is embedded within the new matrix.
+func SetDims(A Matrix, m, n int) Matrix {
+	// TODO: Consider renaming this function.
+	ma, na := A.Dimensions()
+	return MakeMatrix(
 		m,
 		n,
 		func(a, b int) float64 {
-			switch {
-			case a == b, a == i && b == j, a == j && b == i:
-				return 1
+			if a < ma && b < na {
+				return A[a][b]
+			}
+			return 0
+		},
+	)
+}
+
+// Len returns the number of vectors in a given matrix.
+func (A Matrix) Len() int {
+	return len(A)
+}
+
+// Swap swaps two vectors in a matrix.
+func (A Matrix) Swap(i, j int) {
+	A[i], A[j] = A[j], A[i]
+}
+
+// Less returns the comparison of two vectors in a matrix.
+func (A Matrix) Less(i, j int) bool {
+	return vector.Less(A[i], A[j])
+}
+
+// Bracket returns the bracket product [A,B] = AB - BA of two matrices. This may
+// also be known as a Lie product.
+func Bracket(A, B Matrix) Matrix {
+	return Subtract(Multiply(A, B), Multiply(B, A))
+}
+
+// Solve TODO
+func (A Matrix) Solve(y vector.Vector) vector.Vector {
+	// 	// x := make(vector.Vector, 0, len(y))
+	// 	// B := Join(A, ColumnMatrix(x))
+	// 	// m, n := B.Dimensions()
+
+	// 	// Sort on kth entry for each row
+	// 	// sort.SliceStable(
+	// 	// 	B,
+	// 	// 	func(i, j int) bool {
+	// 	// 		for k := range B[i] {
+	// 	// 			if B[i][k] < B[j][k] {
+	// 	// 				return true
+	// 	// 			}
+	// 	// 		}
+	// 	// 		return false
+	// 	// 	},
+	// 	// )
+
+	// 	// Iterate through each row
+	// 	// for i := range B {
+	// 	// 	// Divide each row by its diagonal to get 1 on the diagonal
+	// 	// 	if B[i][i] == 0 {
+	// 	// 		continue
+	// 	// 	}
+	// 	// 	for j := range B[i] {
+	// 	// 		B[i][j] /= B[i][i]
+	// 	// 	}
+
+	// 	// 	// Divide each row by -B[i][i] except for ith row
+	// 	// 	for j := range B {
+	// 	// 		if j == i {
+	// 	// 			continue
+	// 	// 		}
+	// 	// 		for k := range B[j] {
+	// 	// 			B[j][k] = B[j][k]/-B[i][i] + B[i][k]
+	// 	// 		}
+	// 	// 	}
+	// 	// }
+	return y
+}
+
+// SwapRows swaps two rows.
+func SwapRows(A Matrix, i, j int) Matrix {
+	m, n := A.Dimensions()
+	return MakeMatrix(
+		m,
+		n,
+		func(a, b int) float64 {
+			switch a {
+			case i:
+				return A[j][b]
+			case j:
+				return A[i][b]
 			default:
-				return 0
+				return A[a][b]
 			}
 		},
 	)
-	return Multiply(I, A)
+}
+
+// SwapCols swaps two columns.
+func SwapCols(A Matrix, i, j int) Matrix {
+	m, n := A.Dimensions()
+	return MakeMatrix(
+		m,
+		n,
+		func(a, b int) float64 {
+			switch b {
+			case i:
+				return A[a][j]
+			case j:
+				return A[a][i]
+			default:
+				return A[a][b]
+			}
+		},
+	)
 }
